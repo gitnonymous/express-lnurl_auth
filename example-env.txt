@@ -1,0 +1,6 @@
+PORT=<server port number>
+LNBITS_BASE=<add domain name>/winlose/api/v1
+MAXAGE=15552000000 # 6 months -add expiry date
+PASSPHRASE=<cookie encryption passphrase>
+LNB_INVOICE_KEY=<LNbits invoice key>
+LNB_ADMIN_KEY=<LNbits admin key>
