@@ -6,15 +6,29 @@ const {encode, decode, fetchio} = require('../js/helpers')
 router.route('/')
 .get(async(req,res)=>{
     try {
-        const {id} = req.query
-        let {success, error} = await fetchio({
-            method:'GET',
-            url: '/users?id='+id
-            // url: '/users?id=lnurl_auth&lnurl_auth=it works'
-        })
-        if(error) return res.status(400).json({error})
-        res.cookie('__wl__', encode(success.usr.id), { maxAge: process.env.MAXAGE, httpOnly: true, secure: true })
-        res.redirect('/')
+        const {id,action} = req.query
+        if(action == 'login'){
+            let {success, error} = await fetchio({
+                method:'GET',
+                // url: '/users?id='+id
+                url: '/users?id=lnurl_auth&lnurl_auth='+id
+            })
+            if(error) return res.status(400).json({error})
+            res.cookie('__wl__', encode(success.usr.id), { maxAge: process.env.MAXAGE, httpOnly: true, secure: true })
+            res.redirect('/')
+        }
+        else if(action == 'register'){
+            let {success, error} = await fetchio({
+                method:'POST',
+                url: '/users',
+                data: {
+                    lnurl_auth: id
+                }
+            })
+            if(error) return res.status(400).json({error})
+            res.cookie('__wl__', encode(success.id), { maxAge: process.env.MAXAGE, httpOnly: true, secure: true })
+            res.redirect('/')
+        }
         // res.status(404).json({msg:'use POST method to contact api'})
     } catch (err) {
         res.status(400).json(err.error)

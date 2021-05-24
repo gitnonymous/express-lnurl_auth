@@ -1,15 +1,16 @@
 const seco = require('secure-container')
-const b64 = require('url-safe-base64')
 const axios = require('axios')
+const lnurl = require('lnurl')
+const { verifyAuthorizationSignature } = require('lnurl/lib')
+const rb = require('randombytes')
 function encode(id){
    const {encryptedData} = seco.encrypt(id, {passphrase: process.env.PASSPHRASE})
-   const urlsafe = b64.encode(encryptedData.toString('base64'))
-   return urlsafe
+   const data = encryptedData.toString('hex')
+   return data
 }
 function decode(d){
     try {
-        const urlsafe = b64.decode(d)
-        const {data} = seco.decrypt(Buffer.from(urlsafe, 'base64'), process.env.PASSPHRASE)
+        const {data} = seco.decrypt(Buffer.from(d, 'hex'), process.env.PASSPHRASE)
         return data.toString('utf-8')
     } catch (err) {
         throw {error: {step: 'decode', msg:'Unauthorized Access'}}
@@ -20,6 +21,7 @@ async function fetchio(p){
     p.url.includes('users') && (k = 'LNB_INVOICE_KEY')
     p.url.includes('win')  && (k = 'LNB_ADMIN_KEY')
     p.url.includes('lose') && (k = 'LNB_ADMIN_KEY')
+    p.method.toLowerCase() == 'delete' && (k = 'LNB_ADMIN_KEY')
     let payload = {}
     payload.url = process.env.LNBITS_BASE+p.url
     payload.method = p.method
@@ -36,11 +38,53 @@ function authorized(req,res,next){
         res.redirect('/login')
     }
 }
+function lnurl_authEncode(p){
+    const apiKey = {
+        id: process.env.LNURL_ID,
+        key: process.env.LNURL_KEY,
+        encoding: 'hex',
+    };
+    const tag = 'login';
+    const params = {
+        cid: p.cid,
+        k1:p.k1,
+        action: p.type
+    };
+    const options = {
+        baseUrl: process.env.LNURL_AUTH_BASEURL,
+        encode: true,
+    };
+    const signedUrl = lnurl.createSignedUrl(apiKey, tag, params, options);
+    console.log(signedUrl);
+    return signedUrl
+    
+}
+function random(n){
+    return rb(n).toString('hex')
+}
+function lnauthUrl(p){
+    const url = `${process.env.LNURL_AUTH_BASEURL}?cid=${p.cid}&k1=${p.k1}&tag=login&action=${p.type}`
+    return url
+}
+
+
+
+// uncomment and generate lnurl api key initial
+// (()=>{
+//     const { id, key, encoding } = lnurl.generateApiKey();
+//     console.log({ id, key, encoding });
+// })()
+
+
 module.exports={
     encode,
     decode,
     fetchio,
-    authorized
+    authorized,
+    lnurl_authEncode,
+    random,
+    lnauthUrl,
+    verifyAuthorizationSignature
 }
 // browser side fetch
 // const res = await(await fetch('api/',{

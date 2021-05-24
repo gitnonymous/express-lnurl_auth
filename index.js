@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express'), app = express(), http = require('http'), server = http.createServer(app),
 { Server } = require("socket.io"), io = new Server(server), path = require('path'),
 coParser = require('cookie-parser'), iocook = require('socket.io-cookie-parser'), cors = require('cors'),
-morgan = require('morgan'), {encode, decode, authorized} = require('./js/helpers'),
+morgan = require('morgan'), {encode, decode, authorized, lnurl_authEncode, random, lnauthUrl, verifyAuthorizationSignature:vs} = require('./js/helpers'),
 {router:api} = require('./routes/api'), {games} = require('./routes/games')
 // view engine
 app.set('view engine', 'ejs')
@@ -17,7 +17,7 @@ app.use(express.static('public'))
 const connected = {}
 io.on('connection', (socket=>{
     const {_wlio} = socket.request.cookies
-    _wlio && (connected[_wlio] = socket.id)
+    _wlio && (connected[_wlio] && (connected[_wlio].sid = socket.id))
     for(time in connected){// delete socket entries over 5 minutes
         new Date().valueOf() - (+time) > 1000*60*5 && delete connected[time] 
     }
@@ -45,9 +45,12 @@ app.get('/login', (req,res)=>{
         decode(req.cookies.__wl__)
         res.redirect('/')
     } catch (err) {
-        let date = new Date().valueOf(), url = 'lnbc100u1ps24v36pp5fs4q5ssymmgzq2w6f62fnmjerhvn8fdxxzu7d2ge0lf7vsf67nwsdq2d3hxzat5dqxq9p5hsqrzjqtqkejjy2c44jrwj08y5ygqtmn8af7vscwnflttzpsgw7tuz9r40ls9vlzgr878x65qqqqd3qqqq89gqjqsp5qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tpwxqergd3c8g7rusq9qypqsqjkjta8ejh4f24ct7ct6crrjacf6gnkde7nvkgzugxpasralp0pdhgdfv8tz8ux524dymc8wfswgcpfq5s38u7fhhgplpprwqc5n0gdsqqfe05p',
-        register = false
-        req.query.register && (register = true)
+        let date = new Date().valueOf(), k1 = random(32), register = false, type = 'login'
+        req.query.register && (register = true, type = 'register')
+        // let url = lnauthUrl({cid: date, k1, type})
+        let url = lnurl_authEncode({cid: date, k1, type})
+        console.log(url);
+        connected[date] = {k1}
         res.cookie('_wlio', date, { maxAge: 300000, httpOnly: false, secure: true })
         res.render('login', {url, register})
     }
@@ -63,10 +66,19 @@ app.use('/api',api)
 app.use('/games', authorized, games)
 // lnurl-auth webhook
 app.get('/webhook/lnurlauth',  async(req,res)=>{
-    let {cid} = req.query, id ='DHqgQuinqnYGrXUiSG4PgZ'
-    console.log(connected[cid]);
-    setTimeout(_=> io.to(connected[cid]).emit('login', {id:connected[cid], msg: id}),2500)
-    res.json({success: cid})
+    let {cid, sig,key,k1, action} = req.query, id ='DHqgQuinqnYGrXUiSG4PgZ' , k1check = (k1 == connected[cid].k1) 
+    try {
+        const verify = vs(sig, k1, key)
+        verify && k1check 
+            ? (
+            io.to(connected[cid].sid).emit('login', {id:connected[cid].sid, msg: key, action}),
+            res.json({status: 'OK'})
+            )
+            : res.json({status: 'ERROR', reason: 'Authentication failed!'})
+        
+    } catch (err) {
+        res.json({status: 'ERROR', reason: 'Authentication failed!'})
+    }
 })
 // catch other requests and pass to homepage
 app.get('/*',(req,res)=>{
@@ -74,4 +86,4 @@ app.get('/*',(req,res)=>{
 })
 // initialize server
 const PORT = process.env.PORT || 8080
-server.listen(PORT, _=> console.log(`server running on port ${PORT}`))
+server.listen(PORT, _=> console.log(`server running on port ${PORT}`));
