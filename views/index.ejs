@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lnauth</title>
+</head>
+<body>
+    <h1>hello</h1>
+    <button id="btn">post</button>
+    <button id="logout">logout</button>
+    <button id="reg">register</button>
+    <button id="login">games -- protected --</button>
+    <script>
+        document.getElementById('btn').addEventListener('click', async e=>{
+            const res = await(await fetch('api/',{
+                method:'POST',
+                headers:{
+                    "Content-type":'application/json',
+                },
+                body:JSON.stringify({
+                    method:'GET',
+                    url: '/win/__?credits=2',
+                    data:null
+                })
+            })).json()
+            console.log(res);
+        })
+        document.getElementById('logout').addEventListener('click', async e=>{
+           location.href = '/logout'
+        })
+        document.getElementById('login').addEventListener('click', async e=>{
+           location.href = '/games'
+        })
+        document.getElementById('reg').addEventListener('click', async e=>{
+           location.href = '/login?register=true'
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.min.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
+    <title>login</title>
+  </head>
+  <body>
+    <div id="q-app">
+        <q-layout>
+            <q-page-container>
+                <q-page class="column items-center justify-center">
+                    <template>
+                        <div class="login-bg full-height full-width" style="position: absolute; top:0; left:0; z-index: -1;">
+                            <q-img 
+                            src="/img/japan_street.png"
+                            style="object-fit: cover; height:100vh; width:100vw;"
+                            :ratio="1"
+                            basic
+                            spinner-color="white"
+                            >
+                        </div>
+                        <q-card style="margin:0 auto; height: 450px; width:95vw; max-width:350px; background: none; backdrop-filter: blur(30px); z-index: 100;" 
+                        class="animate__animated animate__bounceIn login-card column items-center justify-center q-gutter-y-md q-py-md">
+                            <qr-code
+                            style="border-radius: 5px;"
+                            :value='url'
+                            error-level="H"
+                            size="500"
+                            class="shadow-1"
+                            ></qr-code>
+                            <span class="text-white text-h6" style="font-family: Montserrat; text-shadow: 1px 1px rgba(0,0,0,0.8);">lnurl-auth {{!register ? 'login' : 'register'}}</span>
+                            <q-btn class="bg-none text-white text-bold" flat rounded @click="">scan code
+                            <q-btn @click="copytoClip" class="q-ml-sm" icon="content_copy" size="xs" round flat></q-btn></q-btn>
+                            <a :href="!register ? '/login?register=true' : '/login'" class="text-white" style="font-size: 14px; font-family: Montserrat; text-shadow: 1px 1px rgba(0,0,0,0.8);">{{register ? 'login' : 'register'}}</a>
+                        </q-card>
+                    </template>
+                </q-page>
+            </q-page-container>
+        </q-layout>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@^2.0.0/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.umd.min.js"></script>
+    <script src="/js/vendor/vue-qrcode@1.0.2/vue-qrcode.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      Vue.component(VueQrcode.name, VueQrcode)
+      new Vue({
+        el: '#q-app',
+        components:{
+            "qr-code": VueQrcode
+        },
+        data: function () {
+          return {
+            url: "<%=url%>",
+            register: '<%=register%>' == 'true'
+          }
+        },
+        methods: {
+            // async login(){
+            //     const cid =  Object.assign({},...document.cookie.split(';').map(x=> ({[x.split('=')[0].trim()]: x.split('=')[1]})))
+            //     const {success, error} = await(await fetch('/webhook/lnurlauth?cid='+cid._wlio)).json() 
+            // },
+            async copytoClip(){
+                await Quasar.copyToClipboard(this.url)
+                this.$q.notify('lnurl copied to clipboard')
+            }
+        },
+        created(){
+            const socket = io()
+            socket.on('login', data =>{
+            data.id == socket.id && (
+            location.href = `api/?id=${data.msg}&action=${data.action}`
+            )
+            })
+        }
+        // ...etc
+      })
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap');
+        /* .login-bg::after{
+            content: '';
+            height:100vh;
+            width:100vw;
+            position: absolute;
+            top:0;
+            left:0;
+            background-color: #11c2ffab;
+            mix-blend-mode: color-burn;
+            z-index: 0;
+        } */
+        .login-card canvas{
+            max-width: 200px !important;
+            max-height: 200px !important;
+            margin: 0 auto;
+        }
+    </style>
+  </body>
+  </html>
+
+  <!-- document.getElementById('login').addEventListener('click', async e=>{
+    const cid =  Object.assign({},...document.cookie.split(';').map(x=> ({[x.split('=')[0].trim()]: x.split('=')[1]})))
+    const {success, error} = await(await fetch('/webhook/lnurlauth?cid='+cid._wlio)).json()   
+    }) -->
+        <!-- src="https://picsum.photos/800" -->
