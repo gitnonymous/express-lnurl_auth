@@ -4,3 +4,6 @@ MAXAGE=15552000000 #login cookie expiry date 6 months -add expiry date
 PASSPHRASE=<cookie encryption passphrase>
 LNB_INVOICE_KEY=<LNbits invoice key>
 LNB_ADMIN_KEY=<LNbits admin key>
+LNURL_ID=<from lnurl at initalize>
+LNURL_KEY=<from lnurl at initalize>
+LNURL_AUTH_BASEURL=https://<hosted domain>/webhook/lnurlauth  # must be https
