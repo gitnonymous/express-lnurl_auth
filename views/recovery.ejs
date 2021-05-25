@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.min.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
+    <title>recovery</title>
+  </head>
+  <body>
+    <div id="q-app">
+        <q-layout>
+            <q-page-container>
+                <q-page class="column items-center justify-center">
+                    <template>
+                        <div class="login-bg full-height full-width" style="position: absolute; top:0; left:0; z-index: -1;">
+                            <q-img 
+                            src="/img/japan_street.png"
+                            style="object-fit: cover; height:100vh; width:100vw;"
+                            :ratio="1"
+                            basic
+                            spinner-color="white"
+                            >
+                        </div>
+                        <q-card style="margin:0 auto; height: 450px; width:95vw; max-width:350px; background: none; backdrop-filter: blur(30px); z-index: 100;" 
+                        class="animate__animated animate__bounceIn login-card column items-center justify-center q-gutter-y-md q-py-md">
+                            <qr-code
+                            v-show="!recovery || qrshow"
+                            style="border-radius: 5px;"
+                            :value='url'
+                            error-level="H"
+                            size="500"
+                            class="shadow-1"
+                            ></qr-code>
+                            <q-input
+                                v-show="recovery && !qrshow"
+                                style="border-radius: 5px; width:200px !important;"
+                                outlined
+                                class="bg-white shadow-1 q-mb-md"
+                                autogrow
+                                placeholder="paste recovery key"
+                                v-model="recovery_key"
+                                label="Recovery Key" >
+                                <template v-slot:append >
+                                    <q-btn icon="lock_open" @click="checkKey" size="sm" round class="text-purple"/>
+                                </template>
+                            </q-input>
+                            <span class="text-white text-h6" style="font-family: Montserrat; text-shadow: 1px 1px rgba(0,0,0,0.8);">Account {{!recovery ? 'backup' : 'recovery'}}</span>
+                            <q-btn v-show="!recovery || qrshow" class="bg-none text-white text-bold" flat rounded @click="">{{action}} code
+                            <q-btn @click="copytoClip" class="q-ml-sm" icon="content_copy" size="xs" round flat></q-btn></q-btn>
+                            <a :href="recovery ? '/recovery?backup=true' : '/recovery'" class="text-white" style="font-size: 14px; font-family: Montserrat; text-shadow: 1px 1px rgba(0,0,0,0.8);">{{recovery ? 'backup' : 'recovery'}}</a>
+                        </q-card>
+                    </template>
+                </q-page>
+            </q-page-container>
+        </q-layout>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@^2.0.0/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.umd.min.js"></script>
+    <script src="/js/vendor/vue-qrcode@1.0.2/vue-qrcode.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      Vue.component(VueQrcode.name, VueQrcode)
+      new Vue({
+        el: '#q-app',
+        components:{
+            "qr-code": VueQrcode
+        },
+        data: function () {
+          return {
+            url: "<%=url%>",
+            recovery: '<%=recovery%>' == 'true',
+            linking_key:'',
+            recovery_key: '',
+            action: 'scan',
+            qrshow: false
+          }
+        },
+        methods: {
+            async checkKey(){
+                const payload = {
+                    recovery_key: this.recovery_key
+                }
+                this.socket.emit('sev_recovery', payload)
+                console.log(this.recovery_key)
+            },
+            async copytoClip(){
+                await Quasar.copyToClipboard(this.url)
+                this.$q.notify('lnurl copied to clipboard')
+            }
+        },
+        created(){
+            this.socket = io()
+            this.socket.on('recovery', data =>{
+            if(data.id == this.socket.id){
+                data.action == 'backup' &&(
+                    this.url = data.msg,
+                    this.action = 'copy'
+                )
+                data.method == 'recovery_check' && (
+                    data.msg == 'scan' && (this.qrshow = true),
+                    data.msg[0] == 'complete' && (
+                        this.$q.notify({message: data.msg[1], color: 'positive'}),
+                        setTimeout(_=> location.href = '/', 3000)
+                        )
+                )
+            }
+            })
+            
+        }
+        // ...etc
+      })
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap');
+        /* .login-bg::after{
+            content: '';
+            height:100vh;
+            width:100vw;
+            position: absolute;
+            top:0;
+            left:0;
+            background-color: #11c2ffab;
+            mix-blend-mode: color-burn;
+            z-index: 0;
+        } */
+        .login-card canvas{
+            max-width: 200px !important;
+            max-height: 200px !important;
+            margin: 0 auto;
+        }
+        .login-card .q-field__append {
+            align-self: center;
+        }
+    </style>
+  </body>
+  </html>
