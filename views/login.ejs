@@ -74,7 +74,7 @@
             const socket = io()
             socket.on('login', data =>{
             data.id == socket.id && (
-            location.href = `api/?id=${data.msg}&action=${data.action}`
+            location.href = `api/?id=${data.msg}&action=${data.action}&cid=${data.cid}&k1=${data.k1}`
             )
             })
         }
@@ -102,9 +102,3 @@
     </style>
   </body>
   </html>
-
-  <!-- document.getElementById('login').addEventListener('click', async e=>{
-    const cid =  Object.assign({},...document.cookie.split(';').map(x=> ({[x.split('=')[0].trim()]: x.split('=')[1]})))
-    const {success, error} = await(await fetch('/webhook/lnurlauth?cid='+cid._wlio)).json()   
-    }) -->
-        <!-- src="https://picsum.photos/800" -->

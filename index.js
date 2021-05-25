@@ -51,7 +51,7 @@ app.get('/login', (req,res)=>{
         let url = lnurl_authEncode({cid: date, k1, type})
         console.log(url);
         connected[date] = {k1}
-        res.cookie('_wlio', date, { maxAge: 300000, httpOnly: false, secure: true })
+        res.cookie('_wlio', date, { maxAge: 300000, httpOnly: true, secure: true })
         res.render('login', {url, register})
     }
 })
@@ -61,6 +61,7 @@ app.get('/logout', (req,res)=>{
     res.redirect('/')
 })
 // api routes
+app.locals.connected = connected
 app.use('/api',api)
 // games routes -- protected route --
 app.use('/games', authorized, games)
@@ -71,7 +72,7 @@ app.get('/webhook/lnurlauth',  async(req,res)=>{
         const verify = vs(sig, k1, key)
         verify && k1check 
             ? (
-            io.to(connected[cid].sid).emit('login', {id:connected[cid].sid, msg: key, action}),
+            io.to(connected[cid].sid).emit('login', {id:connected[cid].sid, msg: key, action,k1,cid}),
             res.json({status: 'OK'})
             )
             : res.json({status: 'ERROR', reason: 'Authentication failed!'})
