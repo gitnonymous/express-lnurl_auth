@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express'), app = express(), http = require('http'), server = http.createServer(app),
 { Server } = require("socket.io"), io = new Server(server), path = require('path'),
 coParser = require('cookie-parser'), iocook = require('socket.io-cookie-parser'), cors = require('cors'),
-morgan = require('morgan'), {encode, decode, authorized, lnurl_authEncode, random, lnauthUrl, verifyAuthorizationSignature:vs} = require('./js/helpers'),
+morgan = require('morgan'), {encode, decode, authorized, lnurl_authEncode, random, lnauthUrl, fetchio, verifyAuthorizationSignature:vs} = require('./js/helpers'),
 {router:api} = require('./routes/api'), {games} = require('./routes/games')
 // view engine
 app.set('view engine', 'ejs')
@@ -22,11 +22,15 @@ io.on('connection', (socket=>{
         new Date().valueOf() - (+time) > 1000*60*5 && delete connected[time] 
     }
     console.log(connected)
-    socket.on('sev_recovery',data =>{
+    socket.on('sev_recovery', async data =>{
         const index = Object.values(connected).findIndex(x => x.sid == socket.id)
         const cid = Object.keys(connected)[index]
+        let {success, error} = await fetchio({ // check that linking is genuine user
+            method:'GET',
+            url: '/users?id=lnurl_auth&lnurl_auth='+data.recovery_key
+        })
+        if(error) return io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, msg: 'error', method: 'recovery_check'})
         connected[cid].recovery_key = data.recovery_key
-        // check db for user if exists pass to client or pass error
         io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, msg: 'scan', method: 'recovery_check'})
         
     })
@@ -78,8 +82,7 @@ app.get('/recovery', (req,res)=>{
         console.log(url);
         connected[date] = {k1}
         res.cookie('_wlio', date, { maxAge: 300000, httpOnly: true, secure: true })
-        res.render('recovery', {url, recovery})
-        
+        res.render('recovery', {url, recovery}) 
     } catch (err) {
     }
 })
@@ -94,18 +97,44 @@ app.get('/webhook/lnurlauth',  async(req,res)=>{
     try {
         const verify = vs(sig, k1, key)
         if(action == 'login' || action == 'register'){
+            let response, error=[false]
             verify && k1check 
                 ? (
-                io.to(connected[cid].sid).emit('login', {id:connected[cid].sid, msg: key, action,k1,cid}),
-                res.json({status: 'OK'})
+                action == 'register' && (
+                    response = await fetchio({ // check user db for registered user
+                        method:'GET',
+                        url: '/users?id=lnurl_auth&lnurl_auth='+key
+                    }),
+                    response.success && (error = [true, 'Account already exists!'])
+                ),
+                action == 'login' && (
+                    response = await fetchio({ // check user db for registered user
+                        method:'GET',
+                        url: '/users?id=lnurl_auth&lnurl_auth='+key
+                    }),
+                    response.error && (error = [true, 'Account login failed!'])
+                ),
+                io.to(connected[cid].sid).emit('login', {id:connected[cid].sid, msg: key, action,k1,cid, error}),
+                error[0] ? res.json({status: 'ERROR', reason: 'Authentication failed!'}) : res.json({status: 'OK'})
                 )
                 : res.json({status: 'ERROR', reason: 'Authentication failed!'})
         }
         else if(action == 'backup'){
+            let response
             verify && k1check
                 ? (
-                io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, msg: key, action}),
-                res.json({status: 'OK'})
+                response = await fetchio({ // check user db for registered user
+                    method:'GET',
+                    url: '/users?id=lnurl_auth&lnurl_auth='+key
+                }),
+                response.success && (
+                    io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, msg: key, action}),
+                    res.json({status: 'OK'})
+                ),
+                response.error && (
+                    io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, msg: response.error, action, error:true}),
+                    res.json({status: 'ERROR', reason: 'Authentication failed!'})
+                )
                 )
                 : res.json({status: 'ERROR', reason: 'Authentication failed!'})
         }
@@ -113,15 +142,28 @@ app.get('/webhook/lnurlauth',  async(req,res)=>{
             let response
             verify && k1check
             ? (
-                // update account with new linking key
-            console.log(connected[cid]),
-            io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, msg: ['complete','Account update, please login.'], method: 'recovery_check'}),
-            res.json({status: 'OK'})
+            // update account with new linking key
+            response = await fetchio({
+                method:'POST',
+                url: '/recovery',
+                data:{
+                    recovery_key: connected[cid].recovery_key,
+                    linking_key: key
+                }
+            }),
+            response.success && (
+                io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, cid, msg: ['complete','Account update, please login.'],k1,key, method: 'recovery_check'}),
+                res.json({status: 'OK'})
+            ),
+            response.error && (
+                io.to(connected[cid].sid).emit('recovery', {id:connected[cid].sid, msg: ['error', response.error], method: 'recovery_check'}),
+                res.json({status: 'ERROR', reason: 'Authentication failed!'})  
+            )
             )
             : res.json({status: 'ERROR', reason: 'Authentication failed!'})
-        }
-        
+        }  
     } catch (err) {
+        console.error(err);
         res.json({status: 'ERROR', reason: 'Authentication failed!'})
     }
 })

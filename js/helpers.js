@@ -16,11 +16,12 @@ function decode(d){
         throw {error: {step: 'decode', msg:'Unauthorized Access'}}
     }
 }
-async function fetchio(p){
+async function fetchio(p){ // handles win/lose api calls
     let k;
     p.url.includes('users') && (k = 'LNB_INVOICE_KEY')
     p.url.includes('win')  && (k = 'LNB_ADMIN_KEY')
     p.url.includes('lose') && (k = 'LNB_ADMIN_KEY')
+    p.url.includes('recovery') && (k = 'LNB_ADMIN_KEY')
     p.method.toLowerCase() == 'delete' && (k = 'LNB_ADMIN_KEY')
     let payload = {}
     payload.url = process.env.LNBITS_BASE+p.url

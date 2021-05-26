@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css">
     <link href="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
@@ -74,8 +76,10 @@
             const socket = io()
             socket.on('login', data =>{
             data.id == socket.id && (
-            location.href = `api/?id=${data.msg}&action=${data.action}&cid=${data.cid}&k1=${data.k1}`
-            )
+                data.error[0]
+                ? this.$q.notify({message: data.error[1], color: 'negative'})
+                : location.href = `api/?id=${data.msg}&action=${data.action}&cid=${data.cid}&k1=${data.k1}`
+                )
             })
         }
         // ...etc

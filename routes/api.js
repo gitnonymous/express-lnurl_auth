@@ -46,7 +46,7 @@ router.route('/')
         })
         res.json(success)
     } catch (err) {
-        console.log(err);
+        // console.log(err);
         res.status(400).json(err.error)
     }
 })

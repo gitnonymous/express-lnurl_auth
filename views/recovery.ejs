@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css">
     <link href="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
@@ -25,6 +27,7 @@
                         </div>
                         <q-card style="margin:0 auto; height: 450px; width:95vw; max-width:350px; background: none; backdrop-filter: blur(30px); z-index: 100;" 
                         class="animate__animated animate__bounceIn login-card column items-center justify-center q-gutter-y-md q-py-md">
+                            <q-btn v-if="!recovery" class= "text-white q-mb-md" round icon="home" size="md" type="a" href="/"></q-btn>
                             <qr-code
                             v-show="!recovery || qrshow"
                             style="border-radius: 5px;"
@@ -35,7 +38,8 @@
                             ></qr-code>
                             <q-input
                                 v-show="recovery && !qrshow"
-                                style="border-radius: 5px; width:200px !important;"
+                                style="border-radius: 5px;"
+                                :input-style="{maxHeight:'200px'}"
                                 outlined
                                 class="bg-white shadow-1 q-mb-md"
                                 autogrow
@@ -80,6 +84,7 @@
         },
         methods: {
             async checkKey(){
+                if(!this.recovery_key) return this.$q.notify({message: 'Recovery Key Required!', color: 'warning'})
                 const payload = {
                     recovery_key: this.recovery_key
                 }
@@ -97,12 +102,22 @@
             if(data.id == this.socket.id){
                 data.action == 'backup' &&(
                     this.url = data.msg,
-                    this.action = 'copy'
+                    this.action = 'copy',
+                    data.error && (
+                        this.$q.notify({message: data.msg, color: 'negative'}),
+                        setTimeout(_=> location.href = '/', 3000)
+                    )
                 )
                 data.method == 'recovery_check' && (
                     data.msg == 'scan' && (this.qrshow = true),
+                    data.msg == 'error' && ( this.$q.notify({message: 'No Account Found!', color:'negative'})),
                     data.msg[0] == 'complete' && (
                         this.$q.notify({message: data.msg[1], color: 'positive'}),
+                        // setTimeout(_=> location.href = '/', 3000)
+                        setTimeout(_=> location.href = `api/?id=${data.key}&action=login&cid=${data.cid}&k1=${data.k1}`, 3000)
+                        ),
+                    data.msg[0] == 'error' && (
+                        this.$q.notify({message: data.msg[1], color: 'negative'}),
                         setTimeout(_=> location.href = '/', 3000)
                         )
                 )
