@@ -36,8 +36,8 @@ router.route('/')
     }
 })
 .post(async(req,res)=>{
-    try {
-        let id = decode(req.cookies.__wl__), {url, method, data} = req.body 
+    try {// example use only do not allow proxy lnbits api calls from the browser ////////////////////////
+        let id = decode(req.cookies.__wl__), {url, method, data} = req.body
         url = url.replace(/__/g,id)
         const {success} = await fetchio({
             url,

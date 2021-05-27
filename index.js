@@ -3,7 +3,7 @@ const express = require('express'), app = express(), http = require('http'), ser
 { Server } = require("socket.io"), io = new Server(server), path = require('path'),
 coParser = require('cookie-parser'), iocook = require('socket.io-cookie-parser'), cors = require('cors'),
 morgan = require('morgan'), {encode, decode, authorized, lnurl_authEncode, random, lnauthUrl, fetchio, verifyAuthorizationSignature:vs} = require('./js/helpers'),
-{router:api} = require('./routes/api'), {games} = require('./routes/games')
+{router:api} = require('./routes/api'), {games} = require('./routes/games'), {v4:uid} = require('uuid')
 // view engine
 app.set('view engine', 'ejs')
 //middleware
@@ -46,7 +46,7 @@ app.get('/',(req,res)=>{
         // :   (//decode and get user data
         //     decode(req.cookies.__wl__)
         //     ) 
-        res.render('index') // replace index with website homepage
+        res.render('index', {api_key: '1234'}) // replace index with website homepage
     } catch (err) {
         res.status(403).send(err.error)
     }

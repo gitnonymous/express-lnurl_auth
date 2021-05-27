@@ -9,134 +9,146 @@
     <link href="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css">
     <title>login</title>
-  </head>
-  <body>
-    <div id="q-app">
-        <template>
-            <div
-            class="column justify-center items-center index_bg"
-            style="height:100vh; background: url('https://picsum.photos/800') center center no-repeat; 
-            z-index: -1; background-size: cover">
-                <span
-                  class="text-h4 text-white q-mb-lg q-pa-md"
-                  style="text-shadow: 1px 2px #000; z-index: 1000;">
-                  <q-icon
-                  class="text-deep-purple q-mr-xs"
-                  name="flash_on"
-                  size="lg"
-                  ></q-icon><strong>LN</strong>bits: lnurl-auth <q-icon name="settings_ethernet" size="md"></q-icon> Win/Lose</span>
-                <span
-                v-if="user"
-                class="text-white"
-                style="text-shadow: 1px 2px #000; z-index: 1000;">USER</span>
-                <span
-                v-if="user"
-                class="text-h5 text-white q-pa-md"
+</head>
+<body>
+<div id="q-app">
+    <template>
+        <div
+        class="column justify-center items-center index_bg"
+        style="height:100vh; background: url('https://picsum.photos/800') center center no-repeat; 
+        z-index: -1; background-size: cover">
+            <span
+                class="text-h4 text-white q-mb-lg q-pa-md"
                 style="text-shadow: 1px 2px #000; z-index: 1000;">
-                <strong>{{user}}</strong></span>
-                <div v-if="credits" class="row justify-between text-yellow-12 q-mb-lg" style=" width:200px; text-shadow: 1px 2px #000; z-index: 1000;">
-                    <div class="column items-center">
-                        <span>credits</span>
-                        <span class="text-h4">{{credits}}</span>
-                    </div>
-                    <div class="column items-center">
-                        <span>balance</span>
-                        <span class="text-h4">{{bal}} sat</span>
-                    </div>
+                <q-icon
+                class="text-deep-purple q-mr-xs"
+                name="flash_on"
+                size="lg"
+                ></q-icon><strong>LN</strong>bits: lnurl-auth <q-icon name="settings_ethernet" size="md"></q-icon> Win/Lose</span>
+            <span
+            v-if="user"
+            class="text-white"
+            style="text-shadow: 1px 2px #000; z-index: 1000;">USER</span>
+            <span
+            v-if="user"
+            class="text-h5 text-white q-pa-md"
+            style="text-shadow: 1px 2px #000; z-index: 1000;">
+            <strong>{{user}}</strong></span>
+            <div v-if="credits" class="row justify-between text-yellow-12 q-mb-lg" style=" width:200px; text-shadow: 1px 2px #000; z-index: 1000;">
+                <div class="column items-center">
+                    <span>credits</span>
+                    <span class="text-h4">{{credits}}</span>
                 </div>
-                <div class="column justify-center items-center  q-gutter-lg" style="z-index: 1000;">
-                    <q-btn class="bg-white" rounded @click="apiPost">post -- protected --</q-btn>
-                    <q-btn class="bg-white" rounded @click="apiGetuser">user -- protected --</q-btn>
-                    <q-btn class="bg-white" rounded type="a" href="/login">login</q-btn>
-                    <q-btn class="bg-white" rounded type="a" href="/logout">logout</q-btn>
-                    <q-btn class="bg-white" rounded type="a" href="/login?register=true">register</q-btn>
-                    <q-btn class="bg-white" rounded type="a" href="/games">games -- protected -- </q-btn>
-                    <q-btn class="bg-white" rounded type="a" href="/recovery">recover account</q-btn>
+                <div class="column items-center">
+                    <span>balance</span>
+                    <span class="text-h4">{{bal}} sat</span>
                 </div>
             </div>
-        </template>    
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/vue@^2.0.0/dist/vue.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.umd.min.js"></script>
-    <script>
-    
-      new Vue({
-        el: '#q-app',
-        data: function () {
-          return {
-            user:'',
-            credits: '',
-            bal: ''
-          }
-        },
-        methods: {
-            async apiPost(){
-                const res = await(await fetch('api/',{
-                method:'POST',
-                headers:{
-                    "Content-type":'application/json',
-                },
-                body:JSON.stringify({
-                    method:'GET',
-                    url: '/win/__?credits=2',
-                    data:null
-                })
-            })).json()
-            console.log(res);
-            this.credits = res.credits
+            <div class="column justify-center items-center  q-gutter-lg" style="z-index: 1000;">
+                <div class="row justify-center q-gutter-sm">
+                    <q-btn class="bg-white" rounded @click="call({call:'win'})">win -- protected --</q-btn>
+                    <q-btn class="bg-white" rounded @click="call({call:'lose'})">lose -- protected --</q-btn>
+                    <q-btn class="bg-white" rounded @click="call({call:'free_spin'})">free spin -- protected --</q-btn>
+                </div>
+                <q-btn class="bg-white" rounded @click="call({call:'user'})">user -- protected --</q-btn>
+                <q-btn class="bg-white" rounded type="a" href="/login">login</q-btn>
+                <q-btn class="bg-white" rounded type="a" href="/logout">logout</q-btn>
+                <q-btn class="bg-white" rounded type="a" href="/login?register=true">register</q-btn>
+                <q-btn class="bg-white" rounded type="a" href="/games">games -- protected -- </q-btn>
+                <q-btn class="bg-white" rounded type="a" href="/recovery">recover account</q-btn>
+            </div>
+        </div>
+    </template>    
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue@^2.0.0/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quasar@1.15.15/dist/quasar.umd.min.js"></script>
+<script>
+
+    new Vue({
+    el: '#q-app',
+    data: function () {
+        return {
+        user:'',
+        credits: '',
+        bal: ''
+        }
+    },
+    methods: {
+        async apiPost(data){
+            const res = await(await fetch('api/',{
+            method:'POST',
+            headers:{
+                "Content-type":'application/json',
             },
-            async apiGetuser(){
-                const res = await(await fetch('api/',{
+            body:JSON.stringify(data)
+        })).json()
+        console.log(res);
+        !data.call && (this.credits = res.credits)
+        },
+        async call(p){
+            action={}
+            action.win = {
+                method:'GET',
+                url: '/win/__?credits=2',
+                data:null
+            }
+            action.lose = {
+                method:'GET',
+                url: '/lose/__',
+                data:null
+            }
+            action.free_spin = {
+                method:'GET',
+                url: '/lose/__?free_spin=true',
+                data:null
+            }
+            action.user = {
+                call: 'user',
+                method:'GET',
+                url: '/users?id=__&logs=true',
+                data:null
+            }
+            const data =action[p.call]
+            this.apiPost(data)
+        },
+    },
+    async created(){
+        try {
+            const res = await(await fetch('api/',{
                 method:'POST',
                 headers:{
                     "Content-type":'application/json',
-                },
+                    },
                 body:JSON.stringify({
                     method:'GET',
-                    url: '/users?id=__&logs=true',
+                    url: '/users?id=__',
                     data:null
                 })
             })).json()
-            console.log(res);
-            }
-        },
-        async created(){
-            try {
-                const res = await(await fetch('api/',{
-                    method:'POST',
-                    headers:{
-                        "Content-type":'application/json',
-                        },
-                    body:JSON.stringify({
-                        method:'GET',
-                        url: '/users?id=__',
-                        data:null
-                    })
-                })).json()
-                this.user = res.usr.id
-                this.credits = res.usr.credits
-                this.bal = res.usr.balance   
-            } catch (err) {
-                
-            }
-        }
-        // ...etc
-      })
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap');
-        .index_bg::after{
-            content: '';
-            height:100vh;
-            width:100vw;
-            position: absolute;
-            top:0;
-            left:0;
-            background-color: #11c2ffab;
-            mix-blend-mode: color-burn;
-            z-index: 0;
-        }
-      
-    </style>
-  </body>
+            this.user = res.usr.id
+            this.credits = res.usr.credits
+            this.bal = res.usr.balance   
+           } 
+           catch (err) {   
+           }
+    }
+    // ...etc
+    })
+</script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap');
+    .index_bg::after{
+        content: '';
+        height:100vh;
+        width:100vw;
+        position: absolute;
+        top:0;
+        left:0;
+        background-color: #11c2ffab;
+        mix-blend-mode: color-burn;
+        z-index: 0;
+    }
+    
+</style>
+</body>
   </html>
